@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackageId>minhsangdotcom.TheTemplate.ElasticsearchFluentConfig</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Tran Minh Sang</Authors>
+    <Company>minhsangdotcom</Company>
+    <PackageTags>csharp, nuget, clean architecture, Elasticsearch</PackageTags>
+    <Description>Fluent configuration for Elasticsearch .Net</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CaseConverter" Version="2.0.1" />
+    <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.17.1" />
+  </ItemGroup>
+
+</Project>
