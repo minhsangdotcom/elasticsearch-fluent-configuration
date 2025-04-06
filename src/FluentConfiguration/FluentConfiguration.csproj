@@ -11,13 +11,13 @@
     <Company>minhsangdotcom</Company>
     <PackageTags>csharp, nuget, clean architecture, Elasticsearch</PackageTags>
     <RepositoryUrl>https://github.com/minhsangdotcom/elasticsearch-fluent-configuration</RepositoryUrl>
-    <PackageReadmeFile>README-Nuget.md</PackageReadmeFile>
+    <PackageReadmeFile>README-NUGET.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CaseConverter" Version="2.0.1" />
     <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.17.1" />
-    <None Include="README-Nuget.md" Pack="true" PackagePath="" />
+    <None Include="../../README-NUGET.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
 </Project>
