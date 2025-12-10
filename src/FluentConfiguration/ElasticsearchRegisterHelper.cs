@@ -4,10 +4,10 @@ using FluentConfiguration.Configurations;
 
 namespace FluentConfiguration;
 
-public class ElasticsearchRegisterHelper
+public static class ElasticsearchRegisterHelper
 {
     /// <summary>
-    /// Execute connection mapping config
+    /// Execute connection mapping config including id, ignore mapping ....
     /// </summary>
     /// <param name="connectionSettings"></param>
     /// <param name="elsConfigs"></param>
@@ -23,8 +23,8 @@ public class ElasticsearchRegisterHelper
                 [connectionSettings]
             );
 
-            var evaluateMethodInfo = typeof(ConnectionSettingEvaluator)
-                .GetMethod(nameof(IEvaluatorSync.Evaluate))!
+            MethodInfo evaluateMethodInfo = typeof(ConnectionSettingEvaluator)
+                .GetMethod(nameof(IEvaluator.Evaluate))!
                 .MakeGenericMethod(configure.Type);
 
             evaluateMethodInfo.Invoke(connectionSettingEvaluator, [configure.Configs]);
@@ -32,29 +32,30 @@ public class ElasticsearchRegisterHelper
     }
 
     /// <summary>
-    /// execute config classes by reflection
+    /// execute entity configuration
     /// </summary>
     /// <param name="elasticClient"></param>
     /// <param name="elsConfigs"></param>
     /// <returns></returns>
     public static async Task ElasticFluentConfigAsync(
-        ElasticsearchClient elasticClient,
+        this ElasticsearchClient elasticClient,
         IEnumerable<ElasticConfigureResult> configures
     )
     {
-        foreach (var configure in configures)
+        foreach (ElasticConfigureResult configure in configures)
         {
             object? elasticsearchClientEvaluator = Activator.CreateInstance(
                 typeof(ElasticsearchClientEvaluator),
                 [elasticClient]
             );
 
-            var evaluateMethodInfo = typeof(ElasticsearchClientEvaluator)
-                .GetMethod(nameof(IEvaluator.Evaluate))!
+            MethodInfo evaluateMethodInfo = typeof(ElasticsearchClientEvaluator)
+                .GetMethod(nameof(IAsyncEvaluator.EvaluateAsync))!
                 .MakeGenericMethod(configure.Type);
 
-            await (Task)
+            Task evaluateAsync = (Task)
                 evaluateMethodInfo.Invoke(elasticsearchClientEvaluator, [configure.Configs])!;
+            await evaluateAsync;
         }
     }
 
@@ -65,41 +66,47 @@ public class ElasticsearchRegisterHelper
     /// <returns></returns>
     public static IEnumerable<ElasticConfigureResult> GetElasticsearchConfigBuilder(
         Assembly assembly,
-        string prefix
+        string? prefix = null,
+        string? delimiter = null
     )
     {
-        var configuringTypes = GetConfiguringTypes(assembly);
-
+        List<(Type type, Type iType)> configuringTypes = GetConfiguringTypes(assembly);
         foreach (var (type, iType) in configuringTypes)
         {
-            var method = GetConfigureMethod(type);
+            MethodInfo? method = GetConfigureMethod(type);
             if (method == null)
+            {
                 continue;
+            }
 
-            var elasticsearchConfigBuilder = CreateElasticsearchConfigBuilder(iType);
-            var elsConfig = Activator.CreateInstance(type);
+            object? elasticsearchConfigBuilder = CreateElasticsearchConfigBuilder(iType);
+            object? elsConfig = Activator.CreateInstance(type);
 
-            method.Invoke(elsConfig, [elasticsearchConfigBuilder, prefix]);
+            method.Invoke(elsConfig, [elasticsearchConfigBuilder, prefix, delimiter]);
 
             yield return new ElasticConfigureResult(elasticsearchConfigBuilder!, iType);
         }
     }
 
-    private static IEnumerable<(Type type, Type iType)> GetConfiguringTypes(Assembly assembly)
+    private static List<(Type type, Type iType)> GetConfiguringTypes(Assembly assembly)
     {
-        return assembly
-            .GetTypes()
-            .Where(type =>
-                type.GetInterfaces().Any(@interface => IsElasticsearchDocumentConfigure(@interface))
-            )
-            .Select(type =>
-                (
-                    type,
-                    iType: type.GetInterfaces()
-                        .First(@interface => IsElasticsearchDocumentConfigure(@interface))
-                        .GenericTypeArguments[0]
+        return
+        [
+            .. assembly
+                .GetTypes()
+                .Where(type =>
+                    type.GetInterfaces()
+                        .Any(@interface => IsElasticsearchDocumentConfigure(@interface))
                 )
-            );
+                .Select(type =>
+                    (
+                        type,
+                        iType: type.GetInterfaces()
+                            .First(@interface => IsElasticsearchDocumentConfigure(@interface))
+                            .GenericTypeArguments[0]
+                    )
+                ),
+        ];
     }
 
     private static bool IsElasticsearchDocumentConfigure(Type @interface)
@@ -110,12 +117,12 @@ public class ElasticsearchRegisterHelper
 
     private static MethodInfo? GetConfigureMethod(Type type)
     {
-        return type.GetMethod(nameof(IElasticsearchDocumentConfigure<object>.Configure));
+        return type.GetMethod(nameof(IElasticsearchDocumentConfigure<string>.Configure));
     }
 
-    private static object CreateElasticsearchConfigBuilder(Type documentType)
+    private static object? CreateElasticsearchConfigBuilder(Type documentType)
     {
         var builderType = typeof(ElasticsearchConfigBuilder<>).MakeGenericType(documentType);
-        return Activator.CreateInstance(builderType)!;
+        return Activator.CreateInstance(builderType);
     }
 }

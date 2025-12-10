@@ -1,12 +1,12 @@
 namespace FluentConfiguration.Configurations;
 
-public interface IEvaluator
+public interface IAsyncEvaluator
 {
-    Task Evaluate<TEntity>(ElasticsearchConfigBuilder<TEntity> builder)
+    Task EvaluateAsync<TEntity>(ElasticsearchConfigBuilder<TEntity> builder)
         where TEntity : class;
 }
 
-public interface IEvaluatorSync
+public interface IEvaluator
 {
     void Evaluate<TEntity>(ElasticsearchConfigBuilder<TEntity> builder)
         where TEntity : class;

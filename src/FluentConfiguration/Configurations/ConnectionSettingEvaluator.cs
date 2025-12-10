@@ -2,21 +2,16 @@ using Elastic.Clients.Elasticsearch;
 
 namespace FluentConfiguration.Configurations;
 
-public class ConnectionSettingEvaluator(ElasticsearchClientSettings settings) : IEvaluatorSync
+public class ConnectionSettingEvaluator(ElasticsearchClientSettings settings) : IEvaluator
 {
     public void Evaluate<TEntity>(ElasticsearchConfigBuilder<TEntity> builder)
         where TEntity : class
     {
         void Selector(ClrTypeMappingDescriptor<TEntity> descriptor)
         {
-            ClrTypeMappingDescriptor<TEntity> result = null!;
-
             if (builder.Configuration.DocumentId != null)
             {
-                result =
-                    result == null
-                        ? descriptor.IdProperty(builder.Configuration.DocumentId)
-                        : result.IdProperty(builder.Configuration.DocumentId);
+                descriptor.IdProperty(builder.Configuration.DocumentId);
             }
         }
 

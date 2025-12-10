@@ -3,19 +3,20 @@
 Fluent Configurations for elasticsearch in c#.
 
 **Example**
+
 ```csharp
 public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
 {
-    public void Configure(ref ElasticsearchConfigBuilder<AuditLog> buider, string? prefix = null)
+    public void Configure(ref ElasticsearchConfigBuilder<AuditLog> builder, string? prefix = null)
     {
         // declare the name of index
-        buider.ToIndex("audit_log");
+        builder.ToIndex(name:"audit-log", prefix : prefix);
 
         // set key
-        buider.HasKey(key => key.Id);
-        
+        builder.HasKey(key => key.Id);
+
         // add settings
-        buider.Settings(setting =>
+        builder.Settings(setting =>
             setting.Analysis(x =>
                 x.Analyzers(an =>
                         an.Custom(
@@ -39,16 +40,16 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
                     )
             )
         );
-        
+
         // Map properties Manually
-        buider.Properties(config =>
+        builder.Properties(config =>
             config
                 .Text(
                     t => t.Id,
                     config =>
                         config
                             .Fields(f =>
-                                f.Keyword("Id")
+                                f.Keyword("raw")
                             )
                             .Analyzer("myTokenizer")
                             .SearchAnalyzer("standardAnalyzer")
@@ -58,7 +59,7 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
                     config =>
                         config
                             .Fields(f =>
-                                f.Keyword("Entity")
+                                f.Keyword("raw")
                             )
                             .Analyzer("myTokenizer")
                             .SearchAnalyzer("standardAnalyzer")
@@ -71,8 +72,11 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
         );
 
         // Ignore properties
-        buider.Ignores([x => x.NewValue!, x => x.Type]);
+        builder.Ignores([x => x.NewValue!, x => x.Type]);
     }
 }
 ```
-Let check the source code out at [Nuget](https://www.nuget.org/packages/minhsangdotcom.TheTemplate.ElasticsearchFluentConfig)
+
+```
+dotnet add package minhsangdotcom.TheTemplate.ElasticsearchFluentConfig
+```

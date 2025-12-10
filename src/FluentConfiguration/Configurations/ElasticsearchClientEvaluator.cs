@@ -5,9 +5,9 @@ using Elastic.Transport.Products.Elasticsearch;
 
 namespace FluentConfiguration.Configurations;
 
-public class ElasticsearchClientEvaluator(ElasticsearchClient elasticsearchClient) : IEvaluator
+public class ElasticsearchClientEvaluator(ElasticsearchClient elasticsearchClient) : IAsyncEvaluator
 {
-    public async Task Evaluate<TEntity>(ElasticsearchConfigBuilder<TEntity> builder)
+    public async Task EvaluateAsync<TEntity>(ElasticsearchConfigBuilder<TEntity> builder)
         where TEntity : class
     {
         string indexName =
@@ -15,8 +15,8 @@ public class ElasticsearchClientEvaluator(ElasticsearchClient elasticsearchClien
 
         Action<PropertiesDescriptor<TEntity>> maps =
             builder.Configuration.Mapping ?? throw new Exception("Missing mapping properties.");
-
-        if (!(await elasticsearchClient.PingAsync()).IsSuccess())
+        PingResponse response = await elasticsearchClient.PingAsync();
+        if (!response.IsSuccess())
         {
             Console.WriteLine($"cannot connect with elasticsearch server");
             return;
@@ -44,23 +44,24 @@ public class ElasticsearchClientEvaluator(ElasticsearchClient elasticsearchClien
         }
 
         var existsResponse = await elasticsearchClient.Indices.ExistsAsync(indexName);
-        ElasticsearchResponse elasticsearchResponse = !existsResponse.Exists
-            ? await elasticsearchClient.Indices.CreateAsync(indexName, CreateIndexDescriptor)
-            : await elasticsearchClient.Indices.PutMappingAsync(
-                indexName,
-                config => config.Properties(properties)
-            );
-
-        string action = !existsResponse.Exists ? "Create" : "Update";
-
-        if (elasticsearchResponse.IsSuccess())
+        if (existsResponse.Exists)
         {
-            Console.WriteLine($@"{action} elasticsearch {indexName} index sucessfully!");
+            return;
+        }
+
+        CreateIndexResponse indexResponse = await elasticsearchClient.Indices.CreateAsync(
+            indexName,
+            CreateIndexDescriptor
+        );
+
+        if (indexResponse.IsSuccess())
+        {
+            Console.WriteLine($"Create Elasticsearch index '{indexName}' successfully!");
         }
         else
         {
             Console.WriteLine(
-                $"{action} elasticsearch {indexName} index mapping has failed with {elasticsearchResponse.DebugInformation}"
+                $"Create Elasticsearch index '{indexName}' failed: {indexResponse.DebugInformation}"
             );
         }
     }

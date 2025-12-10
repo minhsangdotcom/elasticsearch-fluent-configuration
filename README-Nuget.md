@@ -53,7 +53,7 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
                     config =>
                         config
                             .Fields(f =>
-                                f.Keyword("Id")
+                                f.Keyword("raw")
                             )
                             .Analyzer("myTokenizer")
                             .SearchAnalyzer("standardAnalyzer")
@@ -63,7 +63,7 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
                     config =>
                         config
                             .Fields(f =>
-                                f.Keyword("Entity")
+                                f.Keyword("raw")
                             )
                             .Analyzer("myTokenizer")
                             .SearchAnalyzer("standardAnalyzer")
@@ -108,24 +108,24 @@ ElasticsearchSettings elasticsearch =
                 .ServerCertificateValidationCallback(CertificateValidations.AllowAll);
         }
 
-        IEnumerable<ElasticConfigureResult> elkConfigbuilder =
+        List<ElasticConfigureResult> elkConfigBuilder =
             ElasticsearchRegisterHelper.GetElasticsearchConfigBuilder(
                 Assembly.GetExecutingAssembly(),
                 elasticsearch.PrefixIndex!
             );
 
         // add configurations of id, ignore properties
-        ElasticsearchRegisterHelper.ConfigureConnectionSettings(ref settings, elkConfigbuilder);
+        ElasticsearchRegisterHelper.ConfigureConnectionSettings(ref settings, elkConfigBuilder);
 
         var client = new ElasticsearchClient(settings);
 
         // add configuration of properties
         await ElasticsearchRegisterHelper.ElasticFluentConfigAsync(
             elasticsearchClient,
-            configures
+            elkConfigBuilder
         );
 
-        await DataSeeding.SeedingAsync(client, elasticsearch.PrefixIndex)
+        await DataSeeding.SeedingAsync(client, elasticsearch.PrefixIndex);
 
         services
             .AddSingleton(client)
