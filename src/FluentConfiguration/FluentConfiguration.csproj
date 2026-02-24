@@ -1,12 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <PackageId>minhsangdotcom.TheTemplate.ElasticsearchFluentConfig</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Tran Minh Sang</Authors>
     <Company>minhsangdotcom</Company>
     <PackageTags>csharp, nuget, clean architecture, Elasticsearch</PackageTags>
@@ -19,5 +18,4 @@
     <PackageReference Include="Elastic.Clients.Elasticsearch" Version="9.2.2" />
     <None Include="../../README-NUGET.md" Pack="true" PackagePath="" />
   </ItemGroup>
-
 </Project>
