@@ -32,7 +32,7 @@ public class ElasticsearchConfigBuilder<T>
     // prefix _ domain _ date
     public ElasticsearchConfigBuilder<T> ToIndex(string? prefix = null)
     {
-        string domain = typeof(T).Name.ToKebabCase().ToLowerInvariant();
+        string domain = typeof(T).Name.ToKebabCase();
         string date = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         List<string> parts = [];
