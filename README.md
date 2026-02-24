@@ -4,6 +4,8 @@ Fluent Configurations for elasticsearch in c#.
 
 **Example**
 
+# Usage Example
+
 ```csharp
 public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
 {
@@ -72,11 +74,62 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
         );
 
         // Ignore properties
-        builder.Ignores([x => x.NewValue!, x => x.Type]);
+        builder.Ignores(x => x.NewValue!, x => x.Type);
     }
 }
 ```
 
+# Register
+
+```csharp
+ElasticsearchSettings elasticsearch =
+    configuration.GetSection(nameof(ElasticsearchSettings)).Get<ElasticsearchSettings>()
+            ?? new();
+
+    if (elasticsearch.IsEnabled)
+    {
+        IEnumerable<Uri> nodes = elasticsearch!.Nodes.Select(x => new Uri(x));
+        var pool = new StaticNodePool(nodes);
+        string? userName = elasticsearch.Username;
+        string? password = elasticsearch.Password;
+
+        var settings = new ElasticsearchClientSettings(pool).DefaultIndex(
+            elasticsearch.DefaultIndex!
+        );
+
+        if (!string.IsNullOrWhiteSpace(userName) && !string.IsNullOrWhiteSpace(password))
+        {
+            settings
+                .Authentication(new BasicAuthentication(userName, password))
+                // without ssl trust
+                .ServerCertificateValidationCallback((o, certificate, chain, errors) => true)
+                .ServerCertificateValidationCallback(CertificateValidations.AllowAll);
+        }
+
+        List<ElasticConfigureResult> elkConfigBuilder =
+        [
+            .. ElasticsearchRegisterHelper.GetElasticsearchConfigBuilder(
+                Assembly.GetExecutingAssembly(),
+                settings.PrefixIndex.ToKebabCase()
+            ),
+        ]
+
+        // add configurations of id, ignore properties
+        ElasticsearchRegisterHelper.ConfigureConnectionSettings(ref settings, elkConfigBuilder);
+
+        var client = new ElasticsearchClient(settings);
+
+        // add configuration of properties
+        await client.ElasticFluentConfigAsync(configuration.Configurations);
+        await DataSeeding.SeedingAsync(client, elasticsearch.PrefixIndex);
+
+        services
+            .AddSingleton(client)
+            .AddSingleton<IElasticsearchServiceFactory, ElasticsearchServiceFactory>();
+    }
+```
+
 ```
 dotnet add package minhsangdotcom.TheTemplate.ElasticsearchFluentConfig
+
 ```

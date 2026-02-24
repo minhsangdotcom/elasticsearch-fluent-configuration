@@ -11,16 +11,16 @@ Work well with [Elastic.Clients.Elasticsearch](https://www.nuget.org/packages/El
 ```csharp
 public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
 {
-    public void Configure(ref ElasticsearchConfigBuilder<AuditLog> buider, string? prefix = null)
+    public void Configure(ref ElasticsearchConfigBuilder<AuditLog> builder, string? prefix = null)
     {
         // declare the name of index
-        buider.ToIndex("audit_log");
+        builder.ToIndex(prefix);
 
         // set key
-        buider.HasKey(key => key.Id);
+        builder.HasKey(key => key.Id);
 
         // add settings
-        buider.Settings(setting =>
+        builder.Settings(setting =>
             setting.Analysis(x =>
                 x.Analyzers(an =>
                         an.Custom(
@@ -46,7 +46,7 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
         );
 
         // Map properties Manually
-        buider.Properties(config =>
+        builder.Properties(config =>
             config
                 .Text(
                     t => t.Id,
@@ -76,7 +76,7 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
         );
 
         // Ignore properties
-        buider.Ignores([x => x.NewValue!, x => x.Type]);
+        builder.Ignores(x => x.NewValue!, x => x.Type);
     }
 }
 ```
@@ -88,7 +88,7 @@ ElasticsearchSettings elasticsearch =
     configuration.GetSection(nameof(ElasticsearchSettings)).Get<ElasticsearchSettings>()
             ?? new();
 
-    if (elasticsearch.IsEnbaled)
+    if (elasticsearch.IsEnabled)
     {
         IEnumerable<Uri> nodes = elasticsearch!.Nodes.Select(x => new Uri(x));
         var pool = new StaticNodePool(nodes);
@@ -109,10 +109,12 @@ ElasticsearchSettings elasticsearch =
         }
 
         List<ElasticConfigureResult> elkConfigBuilder =
-            ElasticsearchRegisterHelper.GetElasticsearchConfigBuilder(
+        [
+            .. ElasticsearchRegisterHelper.GetElasticsearchConfigBuilder(
                 Assembly.GetExecutingAssembly(),
-                elasticsearch.PrefixIndex!
-            );
+                settings.PrefixIndex.ToKebabCase()
+            ),
+        ]
 
         // add configurations of id, ignore properties
         ElasticsearchRegisterHelper.ConfigureConnectionSettings(ref settings, elkConfigBuilder);
@@ -120,11 +122,7 @@ ElasticsearchSettings elasticsearch =
         var client = new ElasticsearchClient(settings);
 
         // add configuration of properties
-        await ElasticsearchRegisterHelper.ElasticFluentConfigAsync(
-            elasticsearchClient,
-            elkConfigBuilder
-        );
-
+        await client.ElasticFluentConfigAsync(configuration.Configurations);
         await DataSeeding.SeedingAsync(client, elasticsearch.PrefixIndex);
 
         services
