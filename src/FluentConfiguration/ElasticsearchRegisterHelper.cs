@@ -66,8 +66,7 @@ public static class ElasticsearchRegisterHelper
     /// <returns></returns>
     public static IEnumerable<ElasticConfigureResult> GetElasticsearchConfigBuilder(
         Assembly assembly,
-        string? prefix = null,
-        string? delimiter = null
+        string? prefix = null
     )
     {
         List<(Type type, Type iType)> configuringTypes = GetConfiguringTypes(assembly);
@@ -82,7 +81,7 @@ public static class ElasticsearchRegisterHelper
             object? elasticsearchConfigBuilder = CreateElasticsearchConfigBuilder(iType);
             object? elsConfig = Activator.CreateInstance(type);
 
-            method.Invoke(elsConfig, [elasticsearchConfigBuilder, prefix, delimiter]);
+            method.Invoke(elsConfig, [elasticsearchConfigBuilder, prefix]);
 
             yield return new ElasticConfigureResult(elasticsearchConfigBuilder!, iType);
         }
