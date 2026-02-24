@@ -10,7 +10,7 @@ public class AuditLogConfiguration : IElasticsearchDocumentConfigure<AuditLog>
     public void Configure(ref ElasticsearchConfigBuilder<AuditLog> builder, string? prefix = null)
     {
         // declare the name of index
-        builder.ToIndex(name:"audit-log", prefix : prefix);
+        builder.ToIndex(prefix);
 
         // set key
         builder.HasKey(key => key.Id);
