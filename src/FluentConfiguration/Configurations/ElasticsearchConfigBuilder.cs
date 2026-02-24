@@ -29,51 +29,22 @@ public class ElasticsearchConfigBuilder<T>
         return this;
     }
 
-    /// <summary>
-    /// Creates the Elasticsearch index name for the entity <typeparamref name="T"/>.
-    /// </summary>
-    /// <param name="name">
-    /// Optional custom index name. If not provided, the entity type name of <typeparamref name="T"/> is used.
-    /// </param>
-    /// <param name="prefix">
-    /// Optional prefix used to distinguish indexes across multiple projects or bounded contexts.
-    /// </param>
-    /// <param name="case">
-    /// Defines how the default index name is formatted. Elasticsearch typically uses kebab-case or snake-case.
-    /// Default is <see cref="IndexNameCase.KebabCase"/>.
-    /// </param>
-    /// <param name="delimiter">
-    /// The delimiter applied between the prefix and the index name, default is "_" .
-    /// </param>
-    /// <returns></returns>
-    public ElasticsearchConfigBuilder<T> ToIndex(
-        string? name = null,
-        string? prefix = null,
-        string delimiter = "_",
-        IndexNameCase @case = IndexNameCase.KebabCase
-    )
+    // prefix _ domain _ date
+    public ElasticsearchConfigBuilder<T> ToIndex(string? prefix = null)
     {
-        string indexName = string.Empty;
+        string domain = typeof(T).Name.ToKebabCase().ToLowerInvariant();
+        string date = DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+        List<string> parts = [];
         if (!string.IsNullOrWhiteSpace(prefix))
         {
-            indexName = $"{prefix}{delimiter}";
+            parts.Add(prefix.ToLowerInvariant());
         }
 
-        if (!string.IsNullOrWhiteSpace(name))
-        {
-            indexName += name;
-        }
-        else
-        {
-            string defaultName = typeof(T).Name;
-            indexName += @case switch
-            {
-                IndexNameCase.SnakeCase => defaultName.ToSnakeCase(),
-                _ => defaultName.ToKebabCase(),
-            };
-        }
+        parts.Add(domain);
+        parts.Add(date);
 
-        configuration.IndexName = indexName;
+        configuration.IndexName = string.Join("_", parts);
         return this;
     }
 
