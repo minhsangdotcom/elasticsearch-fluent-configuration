@@ -13,7 +13,7 @@ public class ElasticsearchConfiguration<T>
 
     public Action<IndexSettingsDescriptor>? Settings { get; set; }
 
-    public List<Expression<Func<T, object>>> IgnoreProperties { get; set; } = [];
+    public List<Expression<Func<T, object>>> IgnoredProperties { get; set; } = [];
 
     public string? IndexName { get; set; }
 }

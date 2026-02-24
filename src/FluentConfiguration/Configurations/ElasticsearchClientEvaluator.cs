@@ -1,7 +1,6 @@
 using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.IndexManagement;
 using Elastic.Clients.Elasticsearch.Mapping;
-using Elastic.Transport.Products.Elasticsearch;
 
 namespace FluentConfiguration.Configurations;
 

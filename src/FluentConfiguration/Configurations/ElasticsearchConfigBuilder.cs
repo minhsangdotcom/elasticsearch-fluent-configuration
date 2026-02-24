@@ -29,11 +29,10 @@ public class ElasticsearchConfigBuilder<T>
         return this;
     }
 
-    // prefix _ domain _ date
+    // prefix_domain
     public ElasticsearchConfigBuilder<T> ToIndex(string? prefix = null)
     {
         string domain = typeof(T).Name.ToKebabCase();
-        string date = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         List<string> parts = [];
         if (!string.IsNullOrWhiteSpace(prefix))
@@ -42,15 +41,15 @@ public class ElasticsearchConfigBuilder<T>
         }
 
         parts.Add(domain);
-        parts.Add(date);
-
         configuration.IndexName = string.Join("_", parts);
         return this;
     }
 
-    public ElasticsearchConfigBuilder<T> Ignores(List<Expression<Func<T, object>>> ignoreProperties)
+    public ElasticsearchConfigBuilder<T> Ignores(
+        params Expression<Func<T, object>>[] ignoredProperties
+    )
     {
-        configuration.IgnoreProperties = ignoreProperties;
+        configuration.IgnoredProperties = [.. ignoredProperties];
         return this;
     }
 }
